@@ -14,35 +14,33 @@ vim.keymap.set('n', '<leader>o', ':update<CR> :source<CR>')
 vim.keymap.set('n', '<leader>w', ':write<CR>')
 vim.keymap.set('n', '<leader>q', ':quit<CR>')
 vim.keymap.set('i', 'jk', '<ESC>')
+vim.keymap.set('n', '<A-h>', '<C-w>h')
+vim.keymap.set('n', '<A-j>', '<C-w>j')
+vim.keymap.set('n', '<A-k>', '<C-w>k')
+vim.keymap.set('n', '<A-l>', '<C-w>l')
 
 --LSP keymaps
 vim.keymap.set('n', '<leader>lf', vim.lsp.buf.format)
 vim.keymap.set('n', 'K', vim.lsp.buf.hover)
 vim.keymap.set('n', 'gl', vim.diagnostic.open_float)
 vim.keymap.set('n', 'gd', vim.lsp.buf.definition)
+vim.keymap.set('n', 'gr', vim.lsp.buf.references)
 
 --File Exploring
 vim.keymap.set('n', '<leader>ff', ":Pick files<CR>")
 vim.keymap.set('n', '<C-n>', ":Oil<CR>")
+
+--Terminal stuff
+vim.keymap.set('n', '<leader>t', ':lua toggleTerminal(20)<CR>')
+vim.keymap.set('t', '<leader>t', 'Exit<CR>:quit<CR>')
 
 vim.pack.add({
     { src = "https://github.com/rose-pine/neovim" },
     { src = "https://github.com/neovim/nvim-lspconfig" },
     { src = "https://github.com/stevearc/oil.nvim" },
     { src = "https://github.com/echasnovski/mini.pick" },
-    { src = "https://github.com/hrsh7th/nvim-cmp" },
+    { src = "https://github.com/Bekaboo/dropbar.nvim" },
 })
-
--- vim.api.nvim_create_autocmd('LspAttach', {
---     callback = function()
---         local client = vim.lsp.get_client_by_id(ev.data.client_id)
---         if client:supports_method('textDocument/completion') then
---             vim.lsp.completion.enable(true, client.id, ev.buf, {
---                 autotrigger = true })
---             end
---         end,
---     })
--- vim.cmd("set completeopt+=noselect")
 
 require "mini.pick".setup()
 require "oil".setup()
@@ -52,3 +50,44 @@ vim.cmd.colorscheme "rose-pine-moon"
 
 vim.lsp.enable({ "lua_ls", "clangd" })
 
+vim.api.nvim_create_autocmd('LspAttach', {
+  group = vim.api.nvim_create_augroup('my.lsp', {}),
+  callback = function(args)
+    local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
+    -- Enable auto-completion. Note: Use CTRL-Y to select an item. |complete_CTRL-Y|
+    if client:supports_method('textDocument/completion') then
+      -- Optional: trigger autocompletion on EVERY keypress. May be slow!
+      -- local chars = {}; for i = 32, 126 do table.insert(chars, string.char(i)) end
+      -- client.server_capabilities.completionProvider.triggerCharacters = chars
+      vim.lsp.completion.enable(true, client.id, args.buf, {autotrigger = true})
+    end
+  end,
+})
+
+vim.cmd("set completeopt+=noselect")
+
+
+local termbuf = nil
+local termwin = nil
+
+function toggleTerminal(height)
+    if termwin and vim.api.nvim_win_is_valid(termwin) then
+        vim.cmd("hide")
+    else
+        vim.cmd("botright new")
+        local newbuf = vim.api.nvim_get_current_buf()
+        vim.cmd("resize " .. height)
+        if termbuf and vim.api.nvim_buf_is_valid(termbuf) then
+            vim.cmd("buffer " .. termbuf)
+            vim.cmd("bd " .. newbuf)
+        else
+            vim.cmd("terminal")
+            termbuf = vim.api.nvim_get_current_buf()
+            vim.wo.number = false
+            vim.wo.relativenumber = false
+            vim.wo.signcolumn = "no"
+        end
+    vim.cmd("startinsert!")
+    termwin = vim.api.nvim_get_current_win()
+    end
+end
