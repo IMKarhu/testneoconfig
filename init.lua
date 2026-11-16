@@ -18,10 +18,14 @@ vim.keymap.set('n', '<A-h>', '<C-w>h')
 vim.keymap.set('n', '<A-j>', '<C-w>j')
 vim.keymap.set('n', '<A-k>', '<C-w>k')
 vim.keymap.set('n', '<A-l>', '<C-w>l')
+vim.keymap.set('v', '<S-j>', ":m '>+1<CR>gv=gv")
+vim.keymap.set('v', '<S-k>', ":m '<-2<CR>gv=gv")
+vim.keymap.set('n', '<S-j>', ":m .+1<CR>==")
+vim.keymap.set('n', '<S-k>', ":m .-2<CR>==")
 
 --LSP keymaps
 vim.keymap.set('n', '<leader>lf', vim.lsp.buf.format)
-vim.keymap.set('n', 'K', vim.lsp.buf.hover)
+vim.keymap.set('n', '<C-k>', vim.lsp.buf.hover)
 vim.keymap.set('n', 'gl', vim.diagnostic.open_float)
 vim.keymap.set('n', 'gd', vim.lsp.buf.definition)
 vim.keymap.set('n', 'gr', vim.lsp.buf.references)
@@ -39,16 +43,18 @@ vim.pack.add({
     { src = "https://github.com/neovim/nvim-lspconfig" },
     { src = "https://github.com/stevearc/oil.nvim" },
     { src = "https://github.com/echasnovski/mini.pick" },
+    { src = "https://github.com/echasnovski/mini.pairs" },
     { src = "https://github.com/Bekaboo/dropbar.nvim" },
 })
 
 require "mini.pick".setup()
+require "mini.pairs".setup()
 require "oil".setup()
 
 
 vim.cmd.colorscheme "rose-pine-moon"
 
-vim.lsp.enable({ "lua_ls", "clangd" })
+vim.lsp.enable({ "lua_ls", "clangd", "glsl_analyzer", "slangd" })
 
 vim.api.nvim_create_autocmd('LspAttach', {
   group = vim.api.nvim_create_augroup('my.lsp', {}),
@@ -57,8 +63,8 @@ vim.api.nvim_create_autocmd('LspAttach', {
     -- Enable auto-completion. Note: Use CTRL-Y to select an item. |complete_CTRL-Y|
     if client:supports_method('textDocument/completion') then
       -- Optional: trigger autocompletion on EVERY keypress. May be slow!
-      -- local chars = {}; for i = 32, 126 do table.insert(chars, string.char(i)) end
-      -- client.server_capabilities.completionProvider.triggerCharacters = chars
+      local chars = {}; for i = 32, 126 do table.insert(chars, string.char(i)) end
+      client.server_capabilities.completionProvider.triggerCharacters = chars
       vim.lsp.completion.enable(true, client.id, args.buf, {autotrigger = true})
     end
   end,
